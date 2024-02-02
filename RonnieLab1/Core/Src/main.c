@@ -77,32 +77,68 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 	//__HAL_RCC_GPIOC_CLK_ENABLE(); // Enable the GPIOC clock in the RCC
+	//PART 1-------------------
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+	//PART 2-------------------
+	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   /* USER CODE __HAL_RCC_GPIOC_CLK_ENABLE(); // Enable the GPIOC clock in the RCCBEGIN 2 */
+	//PART 1------------------
 	GPIOC -> MODER |= GPIO_MODER_MODER6_0;
 	GPIOC -> MODER |= GPIO_MODER_MODER7_0;
 	
-	
 	GPIOC -> ODR |= GPIO_ODR_6;
-
+	//PART 2------------------
+	
+	//GPIOA_PA0 already configured by default for input w/out pull up pull down
 	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	//PART 1 CODE
+	
+	//while (1)
+  //{
+  //  /* USER CODE END WHILE */
+	//	HAL_Delay(200); // Delay 200ms
+	//	// Toggle the output state of both PC8 and PC9
+	//	//HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9);
+		
+	//	GPIOC -> ODR ^= GPIO_ODR_6;
+	//	GPIOC -> ODR ^= GPIO_ODR_7;
+		
+  //  /* USER CODE BEGIN 3 */
+  //}
+	
+	
+	//PART 2 CODE
+	uint32_t debouncer = 0;
   while (1)
   {
     /* USER CODE END WHILE */
-		HAL_Delay(200); // Delay 200ms
-		// Toggle the output state of both PC8 and PC9
-		//HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9);
 		
-		GPIOC -> ODR ^= GPIO_ODR_6;
-		GPIOC -> ODR ^= GPIO_ODR_7;
-		
+		debouncer = (debouncer << 1); // Always shift every loop iteration
+		if (GPIOA->IDR & (GPIO_PIN_0)) { // If input signal is set/high
+		debouncer |= 0x01; // Set lowest bit of bit-vector
+		}
+		if (debouncer == 0xFFFFFFFF) {
+		// This code triggers repeatedly when button is steady high!
+			//GPIOC -> ODR |= GPIO_ODR_6;
+			//GPIOC -> ODR |= GPIO_ODR_7;
+		}
+		if (debouncer == 0x00000000) {
+		// This code triggers repeatedly when button is steady low!
+			//GPIOC -> ODR &= ~GPIO_ODR_6;
+			//GPIOC -> ODR &= ~GPIO_ODR_7;
+		}
+		if (debouncer == 0x7FFFFFFF) {
+		// This code triggers only once when transitioning
+			GPIOC -> ODR ^= GPIO_ODR_6;
+			GPIOC -> ODR ^= GPIO_ODR_7;
+		}
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
