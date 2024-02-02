@@ -63,28 +63,30 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
-
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+	__HAL_RCC_GPIOC_CLK_ENABLE(); // Enable the GPIOC clock in the RCC
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
-
+	GPIO_InitTypeDef initStr = {GPIO_PIN_8 | GPIO_PIN_9,
+	GPIO_MODE_OUTPUT_PP,
+	GPIO_SPEED_FREQ_LOW,
+	GPIO_NOPULL};
+	HAL_GPIO_Init(GPIOC, &initStr); // Initialize pins PC8 & PC9
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET); // Start PC8 high
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -92,7 +94,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+		HAL_Delay(200); // Delay 200ms
+		// Toggle the output state of both PC8 and PC9
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

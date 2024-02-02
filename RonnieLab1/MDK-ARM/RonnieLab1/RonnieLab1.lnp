@@ -1,0 +1,25 @@
+--cpu Cortex-M0
+"ronnielab1\startup_stm32f072xb.o"
+"ronnielab1\main.o"
+"ronnielab1\stm32f0xx_it.o"
+"ronnielab1\stm32f0xx_hal_msp.o"
+"ronnielab1\stm32f0xx_hal_tim.o"
+"ronnielab1\stm32f0xx_hal_tim_ex.o"
+"ronnielab1\stm32f0xx_hal_rcc.o"
+"ronnielab1\stm32f0xx_hal_rcc_ex.o"
+"ronnielab1\stm32f0xx_hal.o"
+"ronnielab1\stm32f0xx_hal_i2c.o"
+"ronnielab1\stm32f0xx_hal_i2c_ex.o"
+"ronnielab1\stm32f0xx_hal_gpio.o"
+"ronnielab1\stm32f0xx_hal_dma.o"
+"ronnielab1\stm32f0xx_hal_cortex.o"
+"ronnielab1\stm32f0xx_hal_pwr.o"
+"ronnielab1\stm32f0xx_hal_pwr_ex.o"
+"ronnielab1\stm32f0xx_hal_flash.o"
+"ronnielab1\stm32f0xx_hal_flash_ex.o"
+"ronnielab1\stm32f0xx_hal_exti.o"
+"ronnielab1\system_stm32f0xx.o"
+--strict --scatter "RonnieLab1\RonnieLab1.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "RonnieLab1.map" -o RonnieLab1\RonnieLab1.axf
