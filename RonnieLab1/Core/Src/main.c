@@ -84,21 +84,27 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  /* USER CODE __HAL_RCC_GPIOC_CLK_ENABLE(); // Enable the GPIOC clock in the RCCBEGIN 2 */
-	//PART 1------------------
+  /* USER CODE 
+	__HAL_RCC_GPIOC_CLK_ENABLE(); // Enable the GPIOC clock in the RCCBEGIN 2 */
+	//PART 1-CONFIG---------------------------------------------------------------------------------
+	
+	//SETUP of GPIOC 6/7 identical between PART 1 and PART 2
 	GPIOC -> MODER |= GPIO_MODER_MODER6_0;
 	GPIOC -> MODER |= GPIO_MODER_MODER7_0;
-	
 	GPIOC -> ODR |= GPIO_ODR_6;
-	//PART 2------------------
+	
+	//PART 2-CONFIG--------------------------------------------------------------------------------
 	
 	//GPIOA_PA0 already configured by default for input w/out pull up pull down
+	//NO CONFIG REQUIRED FOR GPIO A PIN 0.
+	//Already Configured by default (00 in MODER, OTYPER, OSPEEDR, PUPDR)
 	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	//PART 1 CODE
+	
+	//PART 1-LOOP--------------------------------------------------------
 	
 	//while (1)
   //{
@@ -109,38 +115,33 @@ int main(void)
 		
 	//	GPIOC -> ODR ^= GPIO_ODR_6;
 	//	GPIOC -> ODR ^= GPIO_ODR_7;
-		
-  //  /* USER CODE BEGIN 3 */
   //}
 	
 	
-	//PART 2 CODE
+	//PART 2-LOOP---------------------------------------------------------
 	uint32_t debouncer = 0;
   while (1)
   {
-    /* USER CODE END WHILE */
-		
 		debouncer = (debouncer << 1); // Always shift every loop iteration
 		if (GPIOA->IDR & (GPIO_PIN_0)) { // If input signal is set/high
 		debouncer |= 0x01; // Set lowest bit of bit-vector
 		}
 		if (debouncer == 0xFFFFFFFF) {
 		// This code triggers repeatedly when button is steady high!
-			//GPIOC -> ODR |= GPIO_ODR_6;
-			//GPIOC -> ODR |= GPIO_ODR_7;
 		}
 		if (debouncer == 0x00000000) {
 		// This code triggers repeatedly when button is steady low!
-			//GPIOC -> ODR &= ~GPIO_ODR_6;
-			//GPIOC -> ODR &= ~GPIO_ODR_7;
 		}
 		if (debouncer == 0x7FFFFFFF) {
 		// This code triggers only once when transitioning
 			GPIOC -> ODR ^= GPIO_ODR_6;
 			GPIOC -> ODR ^= GPIO_ODR_7;
 		}
+	}
+    /* USER CODE END WHILE */
+		
     /* USER CODE BEGIN 3 */
-  }
+  
   /* USER CODE END 3 */
 }
 
