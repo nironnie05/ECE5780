@@ -89,11 +89,11 @@ int main(void)
 	
 	//Push Button Interrupt setup-----------
 	EXTI -> IMR |= EXTI_IMR_IM0;
-	//Do not need to enable to event for EXTI0
+	//Do not need to enable the event for EXTI0
 	EXTI -> RTSR |= EXTI_RTSR_RT0;
 	
-	//EXTI -> FTSR |= EXTI_FTSR_FT0;	//WE dont want falling edge trigger interrupts
-	//NO CONFIG OF SYSCFG_EXTICR0 -> EXTI0 required, defaults to PA0 input
+	//EXTI -> FTSR |= EXTI_FTSR_FT0;	//We dont want falling edge trigger interrupts
+	//SYSCFG_EXTICR0 -> EXTI0 required, defaults to PA0 input
 	//Configuration of NVIC/CMOSIS-----------
 	/* (1) Enable Interrupt on EXTI0_0 */
 	/* (2) Set priority for EXTI0_0 */

@@ -149,6 +149,10 @@ void SysTick_Handler(void)
 
 /* USER CODE BEGIN 1 */
 //Declaring the interrupt handler of EXTI0_1 (Push Button falling edge)
+//NOTE: THIS CODE DOES NOT DIRECTLY REPLICATE LAB INSTRUCTIONS:
+//      because the sys_timer is of higher priority, I used the tim_1_interrupt counter
+//      to more accurately track the time that we want the EXTI0_1 interrupt to prevent 
+//      the main control loop from resuming.
 volatile int tim1_overflowCount;
 void EXTI0_1_IRQHandler(void)
 {
