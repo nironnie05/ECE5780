@@ -73,17 +73,52 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+	
+	
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+	//GPIO CLOCK-------------------
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+	//SYSCFG Clock------------------
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
+	
+	//Push Button Interrupt setup-----------
+	EXTI -> IMR |= EXTI_IMR_IM0;
+	//Do not need to enable to event for EXTI0
+	EXTI -> RTSR |= EXTI_RTSR_RT0;
+	
+	//EXTI -> FTSR |= EXTI_FTSR_FT0;	//WE dont want falling edge trigger interrupts
+	//NO CONFIG OF SYSCFG_EXTICR0 -> EXTI0 required, defaults to PA0 input
+	//Configuration of NVIC/CMOSIS-----------
+	/* (1) Enable Interrupt on EXTI0_0 */
+	/* (2) Set priority for EXTI0_0 */
+	NVIC_EnableIRQ(EXTI0_1_IRQn);
+	NVIC_SetPriority(EXTI0_1_IRQn,2);
+	
+	//2.7------------ Breaking Interrupt Priority Levels----ENABLE AFTER WAVEFORMS CAPTURED FOR 2.8 OR SOMETHING
+	NVIC_SetPriority(SysTick_IRQn,0);//working interrupt priorities
+	//NVIC_SetPriority(SysTick_IRQn,3);//broken interrupt priorities
+	
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
+	//GPIOA_PA0 already configured by default for input, needs configuration for pull down
+	GPIOA -> PUPDR |= GPIO_PUPDR_PUPDR0_1; //setting PUPDR = 10 -> Internal pull-down
+
+	GPIOC -> MODER |= GPIO_MODER_MODER6_0;
+	GPIOC -> MODER |= GPIO_MODER_MODER7_0;
+	GPIOC -> MODER |= GPIO_MODER_MODER8_0;
+	GPIOC -> MODER |= GPIO_MODER_MODER9_0;
+	
+	GPIOC -> ODR |= GPIO_ODR_9;
+	
+	
 
   /* USER CODE END 2 */
 
@@ -92,7 +127,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+		HAL_Delay(500);
+		GPIOC -> ODR ^= GPIO_ODR_6;
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

@@ -1,6 +1,6 @@
 #MicroXplorer Configuration settings - do not modify
-CAD.formats=
-CAD.pinconfig=
+CAD.formats=[]
+CAD.pinconfig=Dual
 CAD.provider=
 File.Version=6
 GPIO.groupedBy=
@@ -52,7 +52,7 @@ ProjectManager.ProjectName=Ronnie_ECE5780_Lab2
 ProjectManager.ProjectStructure=
 ProjectManager.RegisterCallBack=
 ProjectManager.StackSize=0x400
-ProjectManager.TargetToolchain=MDK-ARM V5.32
+ProjectManager.TargetToolchain=MDK-ARM V5
 ProjectManager.ToolChainLocation=
 ProjectManager.UAScriptAfterPath=
 ProjectManager.UAScriptBeforePath=

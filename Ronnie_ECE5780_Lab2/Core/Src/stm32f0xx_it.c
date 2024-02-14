@@ -57,7 +57,7 @@
 /* External variables --------------------------------------------------------*/
 
 /* USER CODE BEGIN EV */
-
+extern volatile int tim1_int_count;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -122,10 +122,17 @@ void PendSV_Handler(void)
 /**
   * @brief This function handles System tick timer.
   */
+volatile int tim1_int_count;
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-
+	tim1_int_count += 1;
+	if(tim1_int_count >= 200){
+			tim1_int_count = 0;
+			GPIOC -> ODR ^= GPIO_ODR_7;
+	}
+	
+	
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
@@ -141,5 +148,34 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /* USER CODE BEGIN 1 */
+//Declaring the interrupt handler of EXTI0_1 (Push Button falling edge)
+volatile int tim1_overflowCount;
+void EXTI0_1_IRQHandler(void)
+{
+		char check_int_latch = 0b0000;
+		char exitLoop = 0b0000;
+		tim1_overflowCount = 0;
+		GPIOC -> ODR ^= GPIO_ODR_8;
+		GPIOC -> ODR ^= GPIO_ODR_9;
+		
+		while(exitLoop == 0){
+			if(tim1_int_count == 0){//tim1_int_count resets to 0 every 200 ms
+				if(check_int_latch != 0) {tim1_overflowCount ++;}
+				check_int_latch = 0b0000;
+			}
+			if(tim1_int_count != 0){//tim1_int_count resets to 0 every 200 ms
+				check_int_latch = 0b0001;
+			}
+			if(tim1_overflowCount == 15)//200 ms * 15 = 3 sec delay before exiting this interrupt.
+			{
+				exitLoop = 0b0001;
+			}
+		}
+	
+		EXTI->PR |= 1;	
+	
+		GPIOC -> ODR ^= GPIO_ODR_8;
+		GPIOC -> ODR ^= GPIO_ODR_9;
+}
 
 /* USER CODE END 1 */

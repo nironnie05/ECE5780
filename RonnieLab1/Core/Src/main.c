@@ -91,6 +91,7 @@ int main(void)
 	//SETUP of GPIOC 6/7 identical between PART 1 and PART 2
 	GPIOC -> MODER |= GPIO_MODER_MODER6_0;
 	GPIOC -> MODER |= GPIO_MODER_MODER7_0;
+	
 	GPIOC -> ODR |= GPIO_ODR_6;
 	
 	//PART 2-CONFIG--------------------------------------------------------------------------------
