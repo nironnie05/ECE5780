@@ -153,33 +153,21 @@ void SysTick_Handler(void)
 //      because the sys_timer is of higher priority, I used the tim_1_interrupt counter
 //      to more accurately track the time that we want the EXTI0_1 interrupt to prevent 
 //      the main control loop from resuming.
-volatile int tim1_overflowCount;
+volatile uint32_t i;
 void EXTI0_1_IRQHandler(void)
 {
-		char check_int_latch = 0b0000;
-		char exitLoop = 0b0000;
-		tim1_overflowCount = 0;
 		GPIOC -> ODR ^= GPIO_ODR_8;
 		GPIOC -> ODR ^= GPIO_ODR_9;
 		
-		while(exitLoop == 0){
-			if(tim1_int_count == 0){//tim1_int_count resets to 0 every 200 ms
-				if(check_int_latch != 0) {tim1_overflowCount ++;}
-				check_int_latch = 0b0000;
-			}
-			if(tim1_int_count != 0){//tim1_int_count resets to 0 every 200 ms
-				check_int_latch = 0b0001;
-			}
-			if(tim1_overflowCount == 15)//200 ms * 15 = 3 sec delay before exiting this interrupt.
-			{
-				exitLoop = 0b0001;
-			}
-		}
-	
-		EXTI->PR |= 1;	
+		for(i = 0; i < 1500000; i++){
+			
+		}	
 	
 		GPIOC -> ODR ^= GPIO_ODR_8;
 		GPIOC -> ODR ^= GPIO_ODR_9;
+		
+		EXTI->PR |= 1;
 }
+
 
 /* USER CODE END 1 */
