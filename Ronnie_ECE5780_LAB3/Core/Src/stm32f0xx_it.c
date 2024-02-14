@@ -133,6 +133,8 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 1 */
 }
 
+
+
 /******************************************************************************/
 /* STM32F0xx Peripheral Interrupt Handlers                                    */
 /* Add here the Interrupt Handlers for the used peripherals.                  */
@@ -141,5 +143,14 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /* USER CODE BEGIN 1 */
-
+//TIMER 2 INTERRUPT HANDLER
+void TIM2_IRQHandler(void)
+{
+	//Toggle Grren/Orange LEDS
+	GPIOC -> ODR ^= GPIO_ODR_8;
+	GPIOC -> ODR ^= GPIO_ODR_9;
+	
+	TIM2->SR &= ~TIM_SR_UIF;
+	//Interrupt flag is hardware cleared
+}
 /* USER CODE END 1 */

@@ -117,8 +117,6 @@ int main(void)
 	GPIOC -> MODER |= GPIO_MODER_MODER9_0;
 	
 	GPIOC -> ODR |= GPIO_ODR_9;
-	
-	
 
   /* USER CODE END 2 */
 

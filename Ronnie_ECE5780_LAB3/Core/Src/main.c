@@ -72,19 +72,53 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+	
+		
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+	//SYSCFG Clock------------------
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
+	
+	//Enabling TIM2/TIM3 
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+	//RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+	
+	//Setting prescalar/ Auto Reload Value for Tim 2 & Their Interrupts
+	TIM2->PSC = 799; // Prescaler value is PSC + 1; 8*10^6 / 800 = 1*10^4 = 10 KHz
+	TIM2->ARR = 2500;
+	//TIM2->DIER |= TIM_DIER_TDE;
+	//TIM2->DIER |= TIM_DIER_TIE; //Clear TIM_SR_TIF to reset interrupt flag;
+	TIM2->EGR |= TIM_EGR_TG;
+	TIM2->DIER |= TIM_DIER_UIE;
+	NVIC_EnableIRQ(TIM2_IRQn);
+  //Setting prescalar/ Auto Reload Value for Tim 3
+	//TIM3->PSC = ???;
+	//TIM3->ARR = ???;
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
 
+	GPIOC -> MODER |= GPIO_MODER_MODER6_0;
+	GPIOC -> MODER |= GPIO_MODER_MODER7_0;
+	GPIOC -> MODER |= GPIO_MODER_MODER8_0;
+	GPIOC -> MODER |= GPIO_MODER_MODER9_0;
+
+	GPIOC -> ODR |= GPIO_ODR_9;
+	
+	// Start TIM2
+  TIM2->CR1 |= TIM_CR1_CEN;
+	// Start TIM3
+  //TIM3->CR1 |= TIM_CR1_CEN;
+	
+	// Start TIM3
+  //TIM3->CR1 |= TIM_CR1_CEN;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -92,7 +126,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+		HAL_Delay(500);
+		GPIOC -> ODR ^= GPIO_ODR_6;
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
