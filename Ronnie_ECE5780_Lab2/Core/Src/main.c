@@ -100,9 +100,15 @@ int main(void)
 	NVIC_EnableIRQ(EXTI0_1_IRQn);
 	NVIC_SetPriority(EXTI0_1_IRQn,2);
 	
-	//2.7------------ Breaking Interrupt Priority Levels----ENABLE AFTER WAVEFORMS CAPTURED FOR 2.8 OR SOMETHING
+	//2.7------------ Breaking Interrupt Priority Levels----
 	NVIC_SetPriority(SysTick_IRQn,0);//working interrupt priorities
 	//NVIC_SetPriority(SysTick_IRQn,3);//broken interrupt priorities
+	//NOTE--------
+	//     Broken Interrupt priorities will completely freeze the processor until the reset button is pressed
+	//     This is because the counter that is incremented inside of the sysTick interrupt is relied upon by
+	//     the button EXTI interrupt function, 
+	//     ie.
+	//     if the sysTick interrupt doesnt run, the button interrupt will never complete.
 	
   /* USER CODE END SysInit */
 
