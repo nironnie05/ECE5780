@@ -87,7 +87,7 @@ int main(void)
 	
 	//Enabling TIM2/TIM3 
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
-	//RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 	
 	//Setting prescalar/ Auto Reload Value for Tim 2 & Their Interrupts
 	TIM2->PSC = 799; // Prescaler value is PSC + 1; 8*10^6 / 800 = 1*10^4 = 10 KHz
@@ -97,9 +97,11 @@ int main(void)
 	TIM2->EGR |= TIM_EGR_TG;
 	TIM2->DIER |= TIM_DIER_UIE;
 	NVIC_EnableIRQ(TIM2_IRQn);
+	
   //Setting prescalar/ Auto Reload Value for Tim 3
-	//TIM3->PSC = ???;
-	//TIM3->ARR = ???;
+	TIM3->PSC = 100; // f_count = 80,000
+	TIM3->ARR = 1000; // 80,000hz / 1000 = 800hz
+	
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
