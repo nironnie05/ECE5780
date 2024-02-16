@@ -100,7 +100,7 @@ int main(void)
 	
   //Setting prescalar/ Auto Reload Value for Tim 3
 	TIM3->PSC = 99; // f_count = 8 *10^6 / (PSC+1) == 8,000,000 / 100 = 80,000
-	TIM3->ARR = 100; // 80,000hz / 1000 = 800hz
+	TIM3->ARR = 100; // 80,000hz / 100 = 800hz
 	
 	//Setting TIM 3 to enable 2 compare channels
 	//TIM3->CCMR1 //Configuring CaptureCompare Configuration for Timer3
