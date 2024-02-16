@@ -72,90 +72,19 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-	
-		
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
-	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
-	//SYSCFG Clock------------------
-	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
-	
-	//Enabling TIM2/TIM3 
-	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
-	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
-	
-	//Setting prescalar/ Auto Reload Value for Tim 2 & Their Interrupts
-	TIM2->PSC = 799; // Prescaler value is PSC + 1; 8*10^6 / 800 = 1*10^4 = 10 KHz
-	TIM2->ARR = 2500;
-	//TIM2->DIER |= TIM_DIER_TDE;
-	//TIM2->DIER |= TIM_DIER_TIE; //Clear TIM_SR_TIF to reset interrupt flag;
-	TIM2->EGR |= TIM_EGR_TG;
-	TIM2->DIER |= TIM_DIER_UIE;
-	NVIC_EnableIRQ(TIM2_IRQn);
-	
-  //Setting prescalar/ Auto Reload Value for Tim 3
-	TIM3->PSC = 99; // f_count = 8 *10^6 / (PSC+1) == 8,000,000 / 100 = 80,000
-	TIM3->ARR = 100; // 80,000hz / 1000 = 800hz
-	
-	//Setting TIM 3 to enable 2 compare channels
-	//TIM3->CCMR1 //Configuring CaptureCompare Configuration for Timer3
-	//OC1M - PWM mode 2 (111) for Tim 3 Channel 1
-	TIM3 -> CCMR1 |= TIM_CCMR1_OC1M_2;
-	TIM3 -> CCMR1 |= TIM_CCMR1_OC1M_1;
-	TIM3 -> CCMR1 |= TIM_CCMR1_OC1M_0;
-	//OC2M - PWM mode (110) 1 for Tim 3 Channel 2
-	TIM3 -> CCMR1 |= TIM_CCMR1_OC2M_2;
-	TIM3 -> CCMR1 |= TIM_CCMR1_OC2M_1;
-	
-	TIM3 -> CCMR1 |= TIM_CCMR1_OC1PE;
-	TIM3 -> CCMR1 |= TIM_CCMR1_OC2PE;
-
-	
-	//TIM3 -> CCRX - At what TIM3 value should PWM output change
-	TIM3 -> CCR1 = 20; //0.2 * 100 = 20
-	TIM3 -> CCR2 = 20;
-	
-	//TIM3 -> CCR1 = 10; //Mode 2
-	//TIM3 -> CCR2 = 90;// Mode 1
-	
-	//TIM3 -> CCR1 = 90; //0.2 * 100 = 20
-	//TIM3 -> CCR2 = 10;
-	
-	//TIM3 -> CCER // Configures Channels of Capture mode
-	//CC1E - Enable Channel 1 Output
-	TIM3 -> CCER |= TIM_CCER_CC1E;
-	//CC2E - Enable Channel 2 Output
-	TIM3 -> CCER |= TIM_CCER_CC2E;
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
 
-	//Configuring PC6/PC7 to Alt Mode using TIM3_CH1/CH2 outputs respectively
-	GPIOC -> MODER |= GPIO_MODER_MODER6_1;//setting PC6/PC7 to Alternate MODER
-	GPIOC -> MODER |= GPIO_MODER_MODER7_1;
-	//THE PC6/PC7 pins alternate functions default to using AF0 ie. what we want
-	//If an assignment would be made it would use:
-	//GPIOC -> AFR |= GPIO_AFRL_AFSEL0; <-- some not messed up bitwise operation to set 4 bits
-	
-	GPIOC -> MODER |= GPIO_MODER_MODER8_0;//Setting PC8/PC9 to Generic Output MODER
-	GPIOC -> MODER |= GPIO_MODER_MODER9_0;
-
-
-
-	GPIOC -> ODR |= GPIO_ODR_9;
-	
-	// Start TIM2
-  TIM2->CR1 |= TIM_CR1_CEN;
-	// Start TIM3
-  TIM3->CR1 |= TIM_CR1_CEN;
-	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -163,7 +92,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-		HAL_Delay(500);
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
