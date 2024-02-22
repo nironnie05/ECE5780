@@ -97,6 +97,7 @@ int main(void)
 	TIM2->EGR |= TIM_EGR_TG;
 	TIM2->DIER |= TIM_DIER_UIE;
 	NVIC_EnableIRQ(TIM2_IRQn);
+	NVIC_SetPriority(SysTick_IRQn,2)
 	
   //Setting prescalar/ Auto Reload Value for Tim 3
 	TIM3->PSC = 99; // f_count = 8 *10^6 / (PSC+1) == 8,000,000 / 100 = 80,000
