@@ -91,37 +91,48 @@ int main(void)
 	
 	//CHECKOFF #2 SETUP OF INTERRUPTS BASED ON DATA INPUT -----------
 	USART3 -> CR1 |= USART_CR1_RXNEIE; //generate interrupt when rxne or ore goes high.
+	USART3 -> CR1 |= USART_CR1_RE;
 	NVIC_EnableIRQ(USART3_4_IRQn);
-	NVIC_SetPriority(USART3_4_IRQn,3);
+	NVIC_SetPriority(USART3_4_IRQn,2);
+	NVIC_SetPriority(SysTick_IRQn,0);
 	
 	//CONFIGURATION of PB10-14 pins for USART usage -------------------
 	GPIOC -> MODER |= GPIO_MODER_MODER4_1;//setting PC10 Alternate MODER
 	GPIOC -> MODER |= GPIO_MODER_MODER5_1;//setting PC11
 	
-	GPIOC -> AFR[0] |= 0x1 << GPIO_AFRL_AFRL4_Pos;//AF4
-	GPIOC -> AFR[0] |= 0x1 << GPIO_AFRL_AFRL5_Pos;//AF4
+	GPIOC -> AFR[0] |= 0x1 << GPIO_AFRL_AFRL4_Pos;//AF1
+	GPIOC -> AFR[0] |= 0x1 << GPIO_AFRL_AFRL5_Pos;//AF1
 	
 	GPIOC -> MODER |= GPIO_MODER_MODER6_0;
 	GPIOC -> MODER |= GPIO_MODER_MODER7_0;
 	GPIOC -> MODER |= GPIO_MODER_MODER8_0;
 	GPIOC -> MODER |= GPIO_MODER_MODER9_0;
-	
-	globalinput = 0;
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-	
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
 	char* error = "there was an error";
-	char* hellomessage = "Your USART3 is working";
+	char* hellomessage = "   Your USART3 is working \n";
 	char testChar = 'a';
-	char* cmdRequest = "   Command: ";
+	char* cmdRequest = " Command: ";
+	char* green0 = " - Green 0 Received";
+	char* green1 = " - Green 1 Received";
+	char* green2 = " - Green 2 Received";
+	char* red0 = " - Red 0 Received";
+	char* red1 = " - Red 1 Received";
+	char* red2 = " - Red 2 Received";
+	char* orange0 = " - Orange 0 Received";
+	char* orange1 = " - Orange 1 Received";
+	char* orange2 = " - Orange 2 Received";
+	char* blue0 = " - Blue 0 Received";
+	char* blue1 = " - Blue 1 Received";
+	char* blue2 = " - Blue 2 Received";
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -129,9 +140,7 @@ int main(void)
 	volatile char rxBuffer = 0;
 	
 	sendCharUSART3(testChar);
-	HAL_Delay(100);
 	sendUSART3(hellomessage);
-	
 
   while (1)
   {
@@ -167,6 +176,7 @@ int main(void)
 		
 		//PART 2 Interrupt based input----------------------
 		sendUSART3(cmdRequest);
+		globalinput = 0;
 		while(globalinput == 0){}
 		sendCharUSART3(globalinput);
 		switch(globalinput)
@@ -178,15 +188,18 @@ int main(void)
 					switch(globalinput)
 					{
 						case '0':
-							GPIOC -> ODR &= GPIO_ODR_6;
+							GPIOC -> ODR &= ~GPIO_ODR_6;
+							sendUSART3(red0);
 							globalinput = 0;
 						break;
 						case '1':
 							GPIOC -> ODR |= GPIO_ODR_6;
+							sendUSART3(red1);
 							globalinput = 0;
 						break;
 						case '2':
 							GPIOC -> ODR ^= GPIO_ODR_6;
+							sendUSART3(red2);
 							globalinput = 0;
 						break;
 						default:
@@ -202,15 +215,18 @@ int main(void)
 					switch(globalinput)
 					{
 						case '0':
-							GPIOC -> ODR &= GPIO_ODR_8;
+							GPIOC -> ODR &= ~GPIO_ODR_8;
+							sendUSART3(orange0);
 							globalinput = 0;
 						break;
 						case '1':
 							GPIOC -> ODR |= GPIO_ODR_8;
+							sendUSART3(orange1);
 							globalinput = 0;
 						break;
 						case '2':
 							GPIOC -> ODR ^= GPIO_ODR_8;
+							sendUSART3(orange2);
 							globalinput = 0;
 						break;
 						default:
@@ -226,15 +242,18 @@ int main(void)
 					switch(globalinput)
 					{
 						case '0':
-							GPIOC -> ODR &= GPIO_ODR_9;
+							GPIOC -> ODR &= ~GPIO_ODR_9;
+							sendUSART3(green0);
 							globalinput = 0;
 						break;
 						case '1':
 							GPIOC -> ODR |= GPIO_ODR_9;
+							sendUSART3(green1);
 							globalinput = 0;
 						break;
 						case '2':
 							GPIOC -> ODR ^= GPIO_ODR_9;
+							sendUSART3(green2);
 							globalinput = 0;
 						break;
 						default:
@@ -250,19 +269,23 @@ int main(void)
 					switch(globalinput)
 					{
 						case '0':
-							GPIOC -> ODR &= GPIO_ODR_7;
+							GPIOC -> ODR &= ~GPIO_ODR_7;
+							sendUSART3(blue0);
 							globalinput = 0;
 						break;
 						case '1':
 							GPIOC -> ODR |= GPIO_ODR_7;
+							sendUSART3(blue1);
 							globalinput = 0;
 						break;
 						case '2':
 							GPIOC -> ODR ^= GPIO_ODR_7;
+							sendUSART3(blue2);
 							globalinput = 0;
 						break;
 						default:
 							sendUSART3(error);
+							sendCharUSART3(globalinput);
 							globalinput = 0;
 						break;
 					}
@@ -332,7 +355,6 @@ void sendUSART3(char* stringinput)
 	int index = 0;
 
 	while(stringinput[index] != 0){
-		
 		
 		sendCharUSART3(stringinput[index]);
 		index++;

@@ -142,12 +142,12 @@ void SysTick_Handler(void)
 
 /* USER CODE BEGIN 1 */
 
-void USART3_4_IRQn_Handler(void)
+void USART3_4_IRQHandler(void)
 {
 	
 	globalinput = USART3 -> RDR;
 	USART3 -> CR1 |= USART_CR1_RE; //Data removed, enable next data read.
-	
+	//USART3 -> CR1 &= ~(USART_CR1_RXNEIE);
 }
 
 /* USER CODE END 1 */

@@ -59,7 +59,7 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 
 /* USER CODE BEGIN Private defines */
-	extern volatile char globalinput;
+extern volatile char globalinput;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
