@@ -94,7 +94,9 @@ int main(void)
 	GPIOB->OTYPER |= GPIO_OTYPER_OT_11;//Output type OpenDrain
 	GPIOB->OTYPER |= GPIO_OTYPER_OT_13;//Output type OpenDrain
 	
-	//PC0 sets i2c mode of gyro ( setting as 1 )
+	//PC0 PB14 = high w/ pushpull
+	GPIOB -> MODER |= GPIO_MODER_MODER14_0;
+	GPIOB -> ODR |= GPIO_ODR_14;
 	GPIOC -> MODER |= GPIO_MODER_MODER0_0;
 	GPIOC -> ODR |= GPIO_ODR_0;
 	
