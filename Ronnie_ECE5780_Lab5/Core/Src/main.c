@@ -72,7 +72,10 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+	
   /* USER CODE END Init */
 
   /* Configure the system clock */
