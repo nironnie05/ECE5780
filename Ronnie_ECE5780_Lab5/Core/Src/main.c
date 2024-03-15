@@ -76,13 +76,41 @@ int main(void)
 	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
 	
+	RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
+	
+	//I2C2 TIMINGR Setup
+	I2C2->TIMINGR |= (I2C_TIMINGR_SCLL_Msk & 0x13);
+	I2C2->TIMINGR |= (I2C_TIMINGR_SCLH_Msk & (0xF << I2C_TIMINGR_SCLH_Pos));//
+	I2C2->TIMINGR |= (I2C_TIMINGR_SDADEL_Msk & (0x2 << I2C_TIMINGR_SDADEL_Pos));
+	I2C2->TIMINGR |= (I2C_TIMINGR_SCLDEL_Msk & (0x2 << I2C_TIMINGR_SCLDEL_Pos));
+	
+	//I2C2 GPIO setup : (PB11 = I2C2_SDA) | (PB13 = I2C2_SCL)
+	GPIOB -> MODER |= GPIO_MODER_MODER11_1;//setting PB11 AF mode
+	GPIOB -> MODER |= GPIO_MODER_MODER13_1;//setting PB13 AF mode
+	
+	GPIOB -> AFR[1] |= 0b0001 << GPIO_AFRL_AFRL2_Pos;//PB11 = AF1 = I2C2_SDA
+	GPIOB -> AFR[1] |= 0b0101 << GPIO_AFRL_AFRL5_Pos;//PB13 = AF5 = I2C2_SCL
+	
+	GPIOB->OTYPER |= GPIO_OTYPER_OT_11;//Output type OpenDrain
+	GPIOB->OTYPER |= GPIO_OTYPER_OT_13;//Output type OpenDrain
+	
+	//PC0 sets i2c mode of gyro ( setting as 1 )
+	GPIOC -> MODER |= GPIO_MODER_MODER0_0;
+	GPIOC -> ODR |= GPIO_ODR_0;
+	
+	GPIOB -> MODER |= GPIO_MODER_MODER6_0;
+	GPIOB -> MODER |= GPIO_MODER_MODER7_0;
+	GPIOB -> MODER |= GPIO_MODER_MODER8_0;
+	GPIOB -> MODER |= GPIO_MODER_MODER9_0;
+	
+	
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+	I2C2->CR1 |= I2C_CR1_PE; //Peripheral Enable I2C2
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
