@@ -78,6 +78,12 @@ int main(void)
 	
 	RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
 	
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
 	//I2C2 TIMINGR Setup
 	I2C2->TIMINGR |= (I2C_TIMINGR_SCLL_Msk & 0x13);                             //SCLL = 0x13
 	I2C2->TIMINGR |= (I2C_TIMINGR_SCLH_Msk & (0xF << I2C_TIMINGR_SCLH_Pos));    //SCLH = 0xF
@@ -88,7 +94,7 @@ int main(void)
 	GPIOB -> MODER |= GPIO_MODER_MODER11_1;//setting PB11 AF mode
 	GPIOB -> MODER |= GPIO_MODER_MODER13_1;//setting PB13 AF mode
 	
-	GPIOB -> AFR[1] |= 0b0001 << GPIO_AFRL_AFRL2_Pos;//PB11 = AF1 = I2C2_SDA
+	GPIOB -> AFR[1] |= 0b0001 << GPIO_AFRL_AFRL3_Pos;//PB11 = AF1 = I2C2_SDA
 	GPIOB -> AFR[1] |= 0b0101 << GPIO_AFRL_AFRL5_Pos;//PB13 = AF5 = I2C2_SCL
 	
 	GPIOB->OTYPER |= GPIO_OTYPER_OT_11;//Output type OpenDrain
@@ -104,15 +110,6 @@ int main(void)
 	GPIOB -> MODER |= GPIO_MODER_MODER7_0;
 	GPIOB -> MODER |= GPIO_MODER_MODER8_0;
 	GPIOB -> MODER |= GPIO_MODER_MODER9_0;
-	
-	
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-	
 	
 	//Peripheral Enable I2C2
 	I2C2->CR1 |= I2C_CR1_PE; 
@@ -139,6 +136,19 @@ int main(void)
 		I2C_TXDR [7:0]: 8 bit transmit data
 		
 		*/
+		
+		GPIOC -> ODR ^= GPIO_ODR_6;
+		GPIOC -> ODR ^= GPIO_ODR_7;
+		GPIOC -> ODR ^= GPIO_ODR_8;
+		GPIOC -> ODR ^= GPIO_ODR_9;
+		HAL_Delay(250);
+		GPIOC -> ODR ^= GPIO_ODR_6;
+		GPIOC -> ODR ^= GPIO_ODR_7;
+		GPIOC -> ODR ^= GPIO_ODR_8;
+		GPIOC -> ODR ^= GPIO_ODR_9;
+		HAL_Delay(250);
+		
+		
 		I2C2 -> CR2 |= (I2C_CR2_SADD_Msk & ( 0x6B << 0)); //set the slave address as 0x6B
 		I2C2 -> CR2 |= (I2C_CR2_NBYTES_Msk & ( 0x1 << I2C_CR2_NBYTES_Pos)); // transfer 1 byte
 		I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x1 << I2C_CR2_RD_WRN_Pos)); //perform write operation
