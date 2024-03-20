@@ -133,16 +133,19 @@ int main(void)
 		I2C_ISR: I2C State indicators ------------------
 		I2C_ISR -> TXIS: TransferRegister Empty/Ready
 		I2C_ISR -> NACKF: Slave did not transmit an acknowledge bit - error occurred
+		I2C_ISR -> TC: transfer complete bit is set by hardware
 		
 		I2C_RXDR [7:0]: 8 bit received data
 		I2C_TXDR [7:0]: 8 bit transmit data
 		
 		*/
 		I2C2 -> CR2 |= (I2C_CR2_SADD_Msk & ( 0x6B << 0)); //set the slave address as 0x6B
-		I2C2 -> CR2 |= (I2C_CR2_NBYTES_Msk & ( 0x1 << I2C_CR2_NBYTES_Pos)); // send 1 byte
+		I2C2 -> CR2 |= (I2C_CR2_NBYTES_Msk & ( 0x1 << I2C_CR2_NBYTES_Pos)); // transfer 1 byte
 		I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x1 << I2C_CR2_RD_WRN_Pos)); //perform write operation
 		I2C2 -> CR1 |= (I2C_CR2_START_Msk & (0x1 << I2C_CR2_START_Pos)); //Start bit = 1
 		
+		
+		//TRANSMIT WHO AM I STEP -----------------------------------------------------------------------------
 		int init_trans_complete = 0;
 		while(init_trans_complete == 0){//repeatidly checking TXIS and NACKF flag for change in state.
 			if((I2C2 -> CR2 & I2C_ISR_TXIS_Msk) == 1){
@@ -156,7 +159,37 @@ int main(void)
 			}
 		}
 		//acknowledge bit from slave was received, proceed with sending of data
-
+		I2C2 -> TXDR = 0b11010011;//send the address of the Who am I register to the slave device
+		while((I2C2 -> ISR & I2C_ISR_TC_Msk) == 0){}//Wait until transfer complete bit is set
+			
+		//RECEIVE WHO AM I DEVICE ID -------------------------------------------------------------------------
+		I2C2 -> CR2 |= (I2C_CR2_SADD_Msk & ( 0x6B << 0)); //set the slave address as 0x6B
+		I2C2 -> CR2 |= (I2C_CR2_NBYTES_Msk & ( 0x1 << I2C_CR2_NBYTES_Pos)); // transfer 1 byte
+		I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x0 << I2C_CR2_RD_WRN_Pos)); //perform read operation
+		I2C2 -> CR1 |= (I2C_CR2_START_Msk & (0x1 << I2C_CR2_START_Pos)); //Start bit = 1
+		
+		init_trans_complete = 0;
+		while(init_trans_complete == 0){//repeatidly checking RXNE and NACKF flag for change in state.
+			if((I2C2 -> CR2 & I2C_ISR_RXNE_Msk) == 1){
+				init_trans_complete = 1;
+			}
+			else if((I2C2 -> CR2 & I2C_ISR_NACKF_Msk) == 1){//checking for a no acknowledge bit returned
+				//no acknowledge bit was returned, ERROR, exit the program.
+				GPIOC -> ODR ^= GPIO_ODR_7;//this is temporarily used as an error indicator COMMENT OUT LATER--------
+				HAL_Delay(2000);
+				return 0;//exit program
+			}
+		}
+		
+		//Checking if received id is correct-----------------------------------------------------------------
+		int receivedData = I2C2 -> RXDR;
+		if( receivedData != 0xD4 ){
+			GPIOC -> ODR ^= GPIO_ODR_7;//this is temporarily used as an error indicator COMMENT OUT LATER--------
+			HAL_Delay(2000);
+			return 0;//exit program
+		}
+		
+		
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -164,7 +197,11 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+		GPIOC -> ODR ^= GPIO_ODR_6;
+		GPIOC -> ODR ^= GPIO_ODR_7;
+		GPIOC -> ODR ^= GPIO_ODR_8;
+		GPIOC -> ODR ^= GPIO_ODR_9;
+		HAL_Delay(250);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
