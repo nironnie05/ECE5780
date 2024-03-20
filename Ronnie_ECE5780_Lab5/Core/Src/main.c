@@ -79,10 +79,10 @@ int main(void)
 	RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
 	
 	//I2C2 TIMINGR Setup
-	I2C2->TIMINGR |= (I2C_TIMINGR_SCLL_Msk & 0x13);
-	I2C2->TIMINGR |= (I2C_TIMINGR_SCLH_Msk & (0xF << I2C_TIMINGR_SCLH_Pos));//
-	I2C2->TIMINGR |= (I2C_TIMINGR_SDADEL_Msk & (0x2 << I2C_TIMINGR_SDADEL_Pos));
-	I2C2->TIMINGR |= (I2C_TIMINGR_SCLDEL_Msk & (0x2 << I2C_TIMINGR_SCLDEL_Pos));
+	I2C2->TIMINGR |= (I2C_TIMINGR_SCLL_Msk & 0x13);                             //SCLL = 0x13
+	I2C2->TIMINGR |= (I2C_TIMINGR_SCLH_Msk & (0xF << I2C_TIMINGR_SCLH_Pos));    //SCLH = 0xF
+	I2C2->TIMINGR |= (I2C_TIMINGR_SDADEL_Msk & (0x2 << I2C_TIMINGR_SDADEL_Pos));//SDADEL = 0x2
+	I2C2->TIMINGR |= (I2C_TIMINGR_SCLDEL_Msk & (0x4 << I2C_TIMINGR_SCLDEL_Pos));//SCLDEL = 0x4
 	
 	//I2C2 GPIO setup : (PB11 = I2C2_SDA) | (PB13 = I2C2_SCL)
 	GPIOB -> MODER |= GPIO_MODER_MODER11_1;//setting PB11 AF mode
@@ -94,7 +94,7 @@ int main(void)
 	GPIOB->OTYPER |= GPIO_OTYPER_OT_11;//Output type OpenDrain
 	GPIOB->OTYPER |= GPIO_OTYPER_OT_13;//Output type OpenDrain
 	
-	//PC0 PB14 = high w/ pushpull
+	//PC0 PB14 = high w/ pushpull: PC0 = I2C mode select pin, PB14 = Slave Address Select both set high
 	GPIOB -> MODER |= GPIO_MODER_MODER14_0;
 	GPIOB -> ODR |= GPIO_ODR_14;
 	GPIOC -> MODER |= GPIO_MODER_MODER0_0;
@@ -112,11 +112,25 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-	I2C2->CR1 |= I2C_CR1_PE; //Peripheral Enable I2C2
+	
+	
+	//Peripheral Enable I2C2
+	I2C2->CR1 |= I2C_CR1_PE; 
+	
+	
+	
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
+		//Relevant Sample Code
+		/*
+		
+		
+		
+		
+		*/
+
 
   /* USER CODE END 2 */
 
