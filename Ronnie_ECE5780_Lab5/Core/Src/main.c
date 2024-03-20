@@ -124,13 +124,21 @@ int main(void)
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
 		//Relevant Sample Code
-		/*
+		/* Note: defaults to 7 bit I2C address mode
+		I2C_CR2 -> NBYTES[7:0]: Number of bytes to transmit/receive
+		I2C_CR2 -> RD_WRN: Transfer Direction -> 1 = Write transfer request, 0 = Read transfer request
+		I2C_CR2 -> START: Start generation bit: set to 1 by software to begin start of data transfer
+		I2C_CR2 -> SADD[7:1]: 7 bit Slave Address
 		
+		I2C_ISR: I2C State indicators
 		
-		
+		I2C_RXDR: 8 bit received data
+		I2C_TXDR: 8 bit transmit data
 		
 		*/
-
+		I2C2 -> CR2 |= (I2C_CR2_SADD_Msk & ( 0x6B << 0)); //set the slave address as 0x6B
+		I2C2 -> CR2 |= (I2C_CR2_NBYTES_Msk & ( 0x1 << I2C_CR2_NBYTES_Pos)); // send 1 byte
+		
 
   /* USER CODE END 2 */
 
