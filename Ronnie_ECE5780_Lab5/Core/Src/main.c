@@ -42,12 +42,22 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+#define gyroID 0x69
+#define WHOAMI 0x0F
+#define xLowID 0x28
+#define xHighID 0x29
+#define yLowID 0x2A
+#define yHighID 0x2B
 
+#define sigThresh 1000
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+void sendRegAddr(uint16_t devID, uint8_t regID);
+void writeReg(uint16_t devID, uint8_t regID, uint8_t data);
+uint8_t readReg(uint16_t devID);
 
 /* USER CODE END PFP */
 
@@ -72,11 +82,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
-	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
-	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
-	
-	RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
 	
   /* USER CODE END Init */
 
@@ -84,7 +89,14 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+	//RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+	
+	RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
+	
 	//I2C2 TIMINGR Setup
+	I2C2->TIMINGR |= (0x1 << 28); // PRESC
 	I2C2->TIMINGR |= (I2C_TIMINGR_SCLL_Msk & 0x13);                             //SCLL = 0x13
 	I2C2->TIMINGR |= (I2C_TIMINGR_SCLH_Msk & (0xF << I2C_TIMINGR_SCLH_Pos));    //SCLH = 0xF
 	I2C2->TIMINGR |= (I2C_TIMINGR_SDADEL_Msk & (0x2 << I2C_TIMINGR_SDADEL_Pos));//SDADEL = 0x2
@@ -106,19 +118,31 @@ int main(void)
 	GPIOC -> MODER |= GPIO_MODER_MODER0_0;
 	GPIOC -> ODR |= GPIO_ODR_0;
 	
-	GPIOB -> MODER |= GPIO_MODER_MODER6_0;
-	GPIOB -> MODER |= GPIO_MODER_MODER7_0;
-	GPIOB -> MODER |= GPIO_MODER_MODER8_0;
-	GPIOB -> MODER |= GPIO_MODER_MODER9_0;
+	//LED OUTPUT SETUP---------------------------------------------------------------------------------
+	GPIOC->MODER |= (1<<12); // PC6 RED
+	GPIOC->MODER |= (1<<14); // PC7 BLUE
+  GPIOC->MODER |= (1<<16); // PC8 ORANGE
+	GPIOC->MODER |= (1<<18); // PC9 GREEN
+	// Set pins to push-pull output type in OTYPER register
+	GPIOC->OTYPER &= ~(1<<6); // PC6
+	GPIOC->OTYPER &= ~(1<<7); // PC7
+	GPIOC->OTYPER &= ~(1<<8); // PC8
+	GPIOC->OTYPER &= ~(1<<9); // PC9
+	//lowspeed
+	GPIOC->OSPEEDR &= ~(1<<12); // PC6
+	GPIOC->OSPEEDR &= ~(1<<14); // PC7
+	GPIOC->OSPEEDR &= ~(1<<16); // PC8
+	GPIOC->OSPEEDR &= ~(1<<18); // PC9
+	//no pupd
+	GPIOC->PUPDR &= ~((1<<12) | (1<<13));//PC6
+	GPIOC->PUPDR &= ~((1<<14) | (1<<15));//PC7
+	GPIOC->PUPDR &= ~((1<<16) | (1<<17));//PC8 
+	GPIOC->PUPDR &= ~((1<<18) | (1<<19));//PC9
 	
 	//Peripheral Enable I2C2
 	I2C2->CR1 |= I2C_CR1_PE; 
 	
-	
-	
   /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
 		//Relevant Sample Code
 		/* Note: defaults to 7 bit I2C address mode
@@ -134,9 +158,14 @@ int main(void)
 		
 		I2C_RXDR [7:0]: 8 bit received data
 		I2C_TXDR [7:0]: 8 bit transmit data
+		GYRO NOTES:
+		0x29 = high 8 bits of x axis
+		0x28 = low  8 bits of x axis
+		0x2B = high 8 bits of y axis
+		0x2A = low  8 bits of y axis
 		
 		*/
-		
+		//1/2 sec LED test
 		GPIOC -> ODR ^= GPIO_ODR_6;
 		GPIOC -> ODR ^= GPIO_ODR_7;
 		GPIOC -> ODR ^= GPIO_ODR_8;
@@ -148,70 +177,88 @@ int main(void)
 		GPIOC -> ODR ^= GPIO_ODR_9;
 		HAL_Delay(250);
 		
-		
-		I2C2 -> CR2 |= (I2C_CR2_SADD_Msk & ( 0x6B << 0)); //set the slave address as 0x6B
-		I2C2 -> CR2 |= (I2C_CR2_NBYTES_Msk & ( 0x1 << I2C_CR2_NBYTES_Pos)); // transfer 1 byte
-		I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x1 << I2C_CR2_RD_WRN_Pos)); //perform write operation
-		I2C2 -> CR1 |= (I2C_CR2_START_Msk & (0x1 << I2C_CR2_START_Pos)); //Start bit = 1
-		
-		
+		//PART 1:
+		/*
 		//TRANSMIT WHO AM I STEP -----------------------------------------------------------------------------
-		int init_trans_complete = 0;
-		while(init_trans_complete == 0){//repeatidly checking TXIS and NACKF flag for change in state.
-			if((I2C2 -> CR2 & I2C_ISR_TXIS_Msk) == 1){
-				init_trans_complete = 1;
-			}
-			else if((I2C2 -> CR2 & I2C_ISR_NACKF_Msk) == 1){//checking for a no acknowledge bit returned
-				//no acknowledge bit was returned, ERROR, exit the program.
-				GPIOC -> ODR ^= GPIO_ODR_7;//this is temporarily used as an error indicator COMMENT OUT LATER--------
-				HAL_Delay(2000);
-				return 0;//exit program
-			}
-		}
-		//acknowledge bit from slave was received, proceed with sending of data
-		I2C2 -> TXDR = 0b11010011;//send the address of the Who am I register to the slave device
-		while((I2C2 -> ISR & I2C_ISR_TC_Msk) == 0){}//Wait until transfer complete bit is set
-			
+		sendRegAddr(gyroID, WHOAMI);
+
 		//RECEIVE WHO AM I DEVICE ID -------------------------------------------------------------------------
-		I2C2 -> CR2 |= (I2C_CR2_SADD_Msk & ( 0x6B << 0)); //set the slave address as 0x6B
-		I2C2 -> CR2 |= (I2C_CR2_NBYTES_Msk & ( 0x1 << I2C_CR2_NBYTES_Pos)); // transfer 1 byte
-		I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x0 << I2C_CR2_RD_WRN_Pos)); //perform read operation
-		I2C2 -> CR1 |= (I2C_CR2_START_Msk & (0x1 << I2C_CR2_START_Pos)); //Start bit = 1
-		
-		init_trans_complete = 0;
-		while(init_trans_complete == 0){//repeatidly checking RXNE and NACKF flag for change in state.
-			if((I2C2 -> CR2 & I2C_ISR_RXNE_Msk) == 1){
-				init_trans_complete = 1;
-			}
-			else if((I2C2 -> CR2 & I2C_ISR_NACKF_Msk) == 1){//checking for a no acknowledge bit returned
-				//no acknowledge bit was returned, ERROR, exit the program.
-				GPIOC -> ODR ^= GPIO_ODR_7;//this is temporarily used as an error indicator COMMENT OUT LATER--------
-				HAL_Delay(2000);
-				return 0;//exit program
+		uint8_t data = readReg(gyroID);
+		if(data == 0xD3){
+			GPIOC -> ODR ^= GPIO_ODR_6;
+			GPIOC -> ODR ^= GPIO_ODR_7;
+			while(1){
+			GPIOC -> ODR ^= GPIO_ODR_6;
+			GPIOC -> ODR ^= GPIO_ODR_7;
+			GPIOC -> ODR ^= GPIO_ODR_8;
+			GPIOC -> ODR ^= GPIO_ODR_9;
+			HAL_Delay(250);
 			}
 		}
-		
-		//Checking if received id is correct-----------------------------------------------------------------
-		int receivedData = I2C2 -> RXDR;
-		if( receivedData != 0xD4 ){
-			GPIOC -> ODR ^= GPIO_ODR_7;//this is temporarily used as an error indicator COMMENT OUT LATER--------
-			HAL_Delay(2000);
-			return 0;//exit program
+		else{
+			GPIOC -> ODR ^= GPIO_ODR_7;
+			HAL_Delay(250);
+			GPIOC -> ODR ^= GPIO_ODR_7;
+			HAL_Delay(250);
+			GPIOC -> ODR ^= GPIO_ODR_7;
+			HAL_Delay(250);
+			GPIOC -> ODR ^= GPIO_ODR_7;
+			HAL_Delay(250);
 		}
-		
-		
+		*/
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	//PART 2 ------------------------------------------------------------------------------------
+	int8_t normal_mode = 0xB;
+	int8_t ctrl_reg1_addr = 0x20;
+	writeReg(gyroID, ctrl_reg1_addr, normal_mode);
+	
+	int32_t thresh = sigThresh;
+	int8_t xlowdat;
+	int8_t ylowdat;
+	int8_t xhighdat;
+	int8_t yhighdat;
+	int16_t xdat;
+	int16_t ydat;
   while (1)
   {
+		//get xlow data
+		sendRegAddr(gyroID, xLowID);
+		xlowdat = readReg(gyroID);
+		
+		//get xhigh data
+		sendRegAddr(gyroID, xHighID);
+		xhighdat = readReg(gyroID);
+		
+		//get ylow data
+		sendRegAddr(gyroID, yLowID);
+		ylowdat = readReg(gyroID);
+		
+		//get yhigh data
+		sendRegAddr(gyroID, yHighID);
+		yhighdat = readReg(gyroID);
+		//calculating x and y value
+		xdat = ((int16_t)xhighdat << 8) | xlowdat;
+		ydat = ((int16_t)yhighdat << 8) | ylowdat;
+		GPIOC->ODR &= ~(GPIO_ODR_7 | GPIO_ODR_6 | GPIO_ODR_8 | GPIO_ODR_9); //turn off all LEDS
+
+		if (ydat > thresh) {
+				GPIOC->ODR |= GPIO_ODR_6; // Red LED for positive Y 
+		} else if (ydat < -thresh) {
+				GPIOC->ODR |= GPIO_ODR_7; // Blue LED for negative Y 
+		}
+
+		if (xdat > thresh) {
+				GPIOC->ODR |= GPIO_ODR_9; // Green LED for positive X
+		} else if (xdat < -thresh) {
+				GPIOC->ODR |= GPIO_ODR_8; // Orange LED for negative X
+		}
+		
+		HAL_Delay(1000);
+		
     /* USER CODE END WHILE */
-		GPIOC -> ODR ^= GPIO_ODR_6;
-		GPIOC -> ODR ^= GPIO_ODR_7;
-		GPIOC -> ODR ^= GPIO_ODR_8;
-		GPIOC -> ODR ^= GPIO_ODR_9;
-		HAL_Delay(250);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -253,6 +300,81 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void sendRegAddr(uint16_t devID, uint8_t regID)
+{
+	I2C2 -> CR2 = 0;//reset cr2 register
+	I2C2 -> CR2 |= (devID << 1);//store devID into SADD[7:1]
+	I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x0 << I2C_CR2_RD_WRN_Pos));//set rd_wrn bit = 0, write operation
+	I2C2 -> CR2 |= (0x1 << I2C_CR2_NBYTES_Pos);//store 0x1 into NBYTES [7:0] ie. send 1 byte
+	I2C2 -> CR2 |= (0x1 << I2C_CR2_START_Pos);//set START bit of CR2 to be 1
+	
+	
+	while (!(I2C2->ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))) {}
+	// Once RXNE flag set continue
+	
+	// Check if NACK set
+	if (I2C2->ISR & I2C_ISR_NACKF)
+	{
+		GPIOC->ODR |= GPIO_ODR_8; // orange led turned on
+	}
+	
+	I2C2->TXDR = regID;
+
+	while (!(I2C2->ISR & I2C_ISR_TC)) {}
+	
+}
+
+uint8_t readReg(uint16_t devID)
+{
+	uint8_t data;
+	I2C2 -> CR2 = 0;//reset cr2 register
+	I2C2 -> CR2 |= (devID << 1);//store devID into SADD[7:1]
+	I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x1 << I2C_CR2_RD_WRN_Pos));//set rd_wrn bit = 1, read operation
+	I2C2->CR2 |= (0x1 << I2C_CR2_NBYTES_Pos);//store 0x1 into NBYTES [7:0] ie. send 1 byte
+	I2C2 -> CR2 |= (0x1 << I2C_CR2_START_Pos);//set START bit of CR2 to be 1
+	
+	
+	while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF))) {}
+	// Once RXNE flag set continue
+	
+	// Check if NACK set
+	if (I2C2->ISR & I2C_ISR_NACKF)
+	{
+		GPIOC->ODR |= GPIO_ODR_8; // orange led turned on
+	}
+	while (!(I2C2->ISR & I2C_ISR_TC)) {}//TC flag indicates that the read register has been filled with data
+	data = I2C2->RXDR;
+	return data;
+}
+
+
+//IGNORE FOR NOW
+void writeReg(uint16_t devID, uint8_t regID, uint8_t data)
+{
+	I2C2 -> CR2 = 0;//reset cr2 register
+	I2C2 -> CR2 |= (devID << 1);//store devID into SADD[7:1]
+	I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x0 << I2C_CR2_RD_WRN_Pos));//set rd_wrn bit = 0, write operation
+	I2C2->CR2 |= (0x1 << I2C_CR2_NBYTES_Pos);//store 0x2 into NBYTES [7:0] ie. send 2 byte
+	I2C2 -> CR2 |= (0x1 << I2C_CR2_START_Pos);//set START bit of CR2 to be 1
+	
+	while (!(I2C2->ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))) {}
+	// Once RXNE flag set continue
+	
+	// Check if NACK set
+	if (I2C2->ISR & I2C_ISR_NACKF)
+	{
+		GPIOC->ODR |= GPIO_ODR_8; // orange led turned on
+	}
+	
+	I2C2->TXDR = regID;//we want to transmit the desired register to modify
+	while (!(I2C2->ISR & I2C_ISR_TC)) {}//wait until that transfer is complete
+	
+	I2C2->TXDR = data;//tells the slave device to store the "data" 8 bits of data into the previously provided register address/ID
+		
+	while (!(I2C2->ISR & I2C_ISR_TC)) {}// wait until transfer is complete to proceed
+}
+
 
 /* USER CODE END 4 */
 
