@@ -255,7 +255,7 @@ int main(void)
 				GPIOC -> ODR |= GPIO_ODR_8; // Orange LED for negative X
 		}
 		
-		HAL_Delay(1000);
+		HAL_Delay(100);
 		
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
@@ -354,7 +354,7 @@ void writeReg(uint16_t devID, uint8_t regID, uint8_t data)
 	
 	I2C2 -> CR2 = 0;//reset cr2 register
 	I2C2 -> CR2 |= (devID << 1);//store devID into SADD[7:1]
-	I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x0 << I2C_CR2_RD_WRN_Pos));//set rd_wrn bit = 0, write operation
+	I2C2 -> CR2 &= ~(1 << 10);//set rd_wrn bit = 0, write operation
 	I2C2 -> CR2 |= (0x2 << I2C_CR2_NBYTES_Pos);//store 0x2 into NBYTES [7:0] ie. send 2 byte
 	I2C2 -> CR2 |= (0x1 << I2C_CR2_START_Pos);//set START bit of CR2 to be 1
 	
@@ -369,11 +369,12 @@ void writeReg(uint16_t devID, uint8_t regID, uint8_t data)
 	
 	I2C2 -> TXDR = regID;//we want to transmit the desired register to modify
 	
-	while (!(I2C2->ISR & I2C_ISR_TC)) {}//wait until that transfer is complete
+	while (!(I2C2->ISR & I2C_ISR_TXIS)) {}//wait until that transfer is complete
 	
 	I2C2 -> TXDR = data;//tells the slave device to store the "data" 8 bits of data into the previously provided register address/ID
 		
 	while (!(I2C2->ISR & I2C_ISR_TC)) {}// wait until transfer is complete to proceed
+
 }
 
 
