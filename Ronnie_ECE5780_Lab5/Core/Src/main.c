@@ -49,7 +49,6 @@
 #define yLowID 0x2A
 #define yHighID 0x2B
 
-#define sigThresh 1000
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -178,24 +177,29 @@ int main(void)
 		HAL_Delay(250);
 		
 		//PART 1:
-		/*
+		
 		//TRANSMIT WHO AM I STEP -----------------------------------------------------------------------------
 		sendRegAddr(gyroID, WHOAMI);
 
 		//RECEIVE WHO AM I DEVICE ID -------------------------------------------------------------------------
 		uint8_t data = readReg(gyroID);
-		if(data == 0xD3){
+		if(data == 0xD3){//I2C w/ Gyro works
 			GPIOC -> ODR ^= GPIO_ODR_6;
 			GPIOC -> ODR ^= GPIO_ODR_7;
-			while(1){
 			GPIOC -> ODR ^= GPIO_ODR_6;
 			GPIOC -> ODR ^= GPIO_ODR_7;
 			GPIOC -> ODR ^= GPIO_ODR_8;
 			GPIOC -> ODR ^= GPIO_ODR_9;
 			HAL_Delay(250);
-			}
+			GPIOC -> ODR ^= GPIO_ODR_6;
+			GPIOC -> ODR ^= GPIO_ODR_7;
+			GPIOC -> ODR ^= GPIO_ODR_8;
+			GPIOC -> ODR ^= GPIO_ODR_9;
+			HAL_Delay(250);
+			GPIOC -> ODR ^= GPIO_ODR_6;
+			GPIOC -> ODR ^= GPIO_ODR_7;
 		}
-		else{
+		else{//I2C w/ Gyro Failed
 			GPIOC -> ODR ^= GPIO_ODR_7;
 			HAL_Delay(250);
 			GPIOC -> ODR ^= GPIO_ODR_7;
@@ -205,7 +209,7 @@ int main(void)
 			GPIOC -> ODR ^= GPIO_ODR_7;
 			HAL_Delay(250);
 		}
-		*/
+		
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -215,45 +219,40 @@ int main(void)
 	int8_t ctrl_reg1_addr = 0x20;
 	writeReg(gyroID, ctrl_reg1_addr, normal_mode);
 	
-	int32_t thresh = sigThresh;
-	int8_t xlowdat;
-	int8_t ylowdat;
-	int8_t xhighdat;
-	int8_t yhighdat;
-	int16_t xdat;
-	int16_t ydat;
+	int32_t thresh = 1000;
   while (1)
   {
 		//get xlow data
 		sendRegAddr(gyroID, xLowID);
-		xlowdat = readReg(gyroID);
+		int8_t xlowdat = readReg(gyroID);
 		
 		//get xhigh data
 		sendRegAddr(gyroID, xHighID);
-		xhighdat = readReg(gyroID);
+		int8_t xhighdat = readReg(gyroID);
 		
 		//get ylow data
 		sendRegAddr(gyroID, yLowID);
-		ylowdat = readReg(gyroID);
+		int8_t ylowdat = readReg(gyroID);
 		
 		//get yhigh data
 		sendRegAddr(gyroID, yHighID);
-		yhighdat = readReg(gyroID);
-		//calculating x and y value
-		xdat = ((int16_t)xhighdat << 8) | xlowdat;
-		ydat = ((int16_t)yhighdat << 8) | ylowdat;
+		int8_t yhighdat = readReg(gyroID);
+		
+		//calculating x and y value, high = upper 8 bits, low = lower 8 bits
+		int16_t xdat = ((int16_t)xhighdat << 8) | (uint8_t)xlowdat;
+		int16_t ydat = ((int16_t)yhighdat << 8) | (uint8_t)ylowdat;
 		GPIOC->ODR &= ~(GPIO_ODR_7 | GPIO_ODR_6 | GPIO_ODR_8 | GPIO_ODR_9); //turn off all LEDS
-
+		
 		if (ydat > thresh) {
-				GPIOC->ODR |= GPIO_ODR_6; // Red LED for positive Y 
+				GPIOC -> ODR |= GPIO_ODR_6; // Red LED for positive Y 
 		} else if (ydat < -thresh) {
-				GPIOC->ODR |= GPIO_ODR_7; // Blue LED for negative Y 
+				GPIOC -> ODR |= GPIO_ODR_7; // Blue LED for negative Y 
 		}
 
 		if (xdat > thresh) {
-				GPIOC->ODR |= GPIO_ODR_9; // Green LED for positive X
+				GPIOC -> ODR |= GPIO_ODR_9; // Green LED for positive X
 		} else if (xdat < -thresh) {
-				GPIOC->ODR |= GPIO_ODR_8; // Orange LED for negative X
+				GPIOC -> ODR |= GPIO_ODR_8; // Orange LED for negative X
 		}
 		
 		HAL_Delay(1000);
@@ -310,18 +309,18 @@ void sendRegAddr(uint16_t devID, uint8_t regID)
 	I2C2 -> CR2 |= (0x1 << I2C_CR2_START_Pos);//set START bit of CR2 to be 1
 	
 	
-	while (!(I2C2->ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))) {}
+	while (!(I2C2 -> ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))) {}
 	// Once RXNE flag set continue
 	
 	// Check if NACK set
 	if (I2C2->ISR & I2C_ISR_NACKF)
 	{
-		GPIOC->ODR |= GPIO_ODR_8; // orange led turned on
+		//GPIOC->ODR |= GPIO_ODR_8; // orange led turned on
 	}
 	
-	I2C2->TXDR = regID;
+	I2C2 -> TXDR = regID;
 
-	while (!(I2C2->ISR & I2C_ISR_TC)) {}
+	while (!(I2C2 -> ISR & I2C_ISR_TC)) {}
 	
 }
 
@@ -331,20 +330,20 @@ uint8_t readReg(uint16_t devID)
 	I2C2 -> CR2 = 0;//reset cr2 register
 	I2C2 -> CR2 |= (devID << 1);//store devID into SADD[7:1]
 	I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x1 << I2C_CR2_RD_WRN_Pos));//set rd_wrn bit = 1, read operation
-	I2C2->CR2 |= (0x1 << I2C_CR2_NBYTES_Pos);//store 0x1 into NBYTES [7:0] ie. send 1 byte
+	I2C2 -> CR2 |= (0x1 << I2C_CR2_NBYTES_Pos);//store 0x1 into NBYTES [7:0] ie. send 1 byte
 	I2C2 -> CR2 |= (0x1 << I2C_CR2_START_Pos);//set START bit of CR2 to be 1
 	
 	
-	while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF))) {}
+	while (!(I2C2 -> ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF))) {}
 	// Once RXNE flag set continue
 	
 	// Check if NACK set
-	if (I2C2->ISR & I2C_ISR_NACKF)
+	if (I2C2 -> ISR & I2C_ISR_NACKF)
 	{
-		GPIOC->ODR |= GPIO_ODR_8; // orange led turned on
+		//GPIOC->ODR |= GPIO_ODR_8; // orange led turned on
 	}
-	while (!(I2C2->ISR & I2C_ISR_TC)) {}//TC flag indicates that the read register has been filled with data
-	data = I2C2->RXDR;
+	while (!(I2C2 -> ISR & I2C_ISR_TC)) {}//TC flag indicates that the read register has been filled with data
+	data = I2C2 -> RXDR;
 	return data;
 }
 
@@ -352,25 +351,27 @@ uint8_t readReg(uint16_t devID)
 //IGNORE FOR NOW
 void writeReg(uint16_t devID, uint8_t regID, uint8_t data)
 {
+	
 	I2C2 -> CR2 = 0;//reset cr2 register
 	I2C2 -> CR2 |= (devID << 1);//store devID into SADD[7:1]
 	I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x0 << I2C_CR2_RD_WRN_Pos));//set rd_wrn bit = 0, write operation
-	I2C2->CR2 |= (0x1 << I2C_CR2_NBYTES_Pos);//store 0x2 into NBYTES [7:0] ie. send 2 byte
+	I2C2 -> CR2 |= (0x1 << I2C_CR2_NBYTES_Pos);//store 0x2 into NBYTES [7:0] ie. send 2 byte
 	I2C2 -> CR2 |= (0x1 << I2C_CR2_START_Pos);//set START bit of CR2 to be 1
 	
-	while (!(I2C2->ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))) {}
+	while (!(I2C2 -> ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))) {}
 	// Once RXNE flag set continue
 	
 	// Check if NACK set
-	if (I2C2->ISR & I2C_ISR_NACKF)
+	if (I2C2 -> ISR & I2C_ISR_NACKF)
 	{
-		GPIOC->ODR |= GPIO_ODR_8; // orange led turned on
+		//GPIOC->ODR |= GPIO_ODR_8; // orange led turned on
 	}
 	
-	I2C2->TXDR = regID;//we want to transmit the desired register to modify
+	I2C2 -> TXDR = regID;//we want to transmit the desired register to modify
+	
 	while (!(I2C2->ISR & I2C_ISR_TC)) {}//wait until that transfer is complete
 	
-	I2C2->TXDR = data;//tells the slave device to store the "data" 8 bits of data into the previously provided register address/ID
+	I2C2 -> TXDR = data;//tells the slave device to store the "data" 8 bits of data into the previously provided register address/ID
 		
 	while (!(I2C2->ISR & I2C_ISR_TC)) {}// wait until transfer is complete to proceed
 }
