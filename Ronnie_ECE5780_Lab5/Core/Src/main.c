@@ -223,19 +223,19 @@ int main(void)
   while (1)
   {
 		//get xlow data
-		sendRegAddr(gyroID, xLowID);
+		sendRegAddr(gyroID, 0x28);
 		int8_t xlowdat = readReg(gyroID);
 		
 		//get xhigh data
-		sendRegAddr(gyroID, xHighID);
+		sendRegAddr(gyroID, 0x29);
 		int8_t xhighdat = readReg(gyroID);
 		
 		//get ylow data
-		sendRegAddr(gyroID, yLowID);
+		sendRegAddr(gyroID, 0x2A);
 		int8_t ylowdat = readReg(gyroID);
 		
 		//get yhigh data
-		sendRegAddr(gyroID, yHighID);
+		sendRegAddr(gyroID, 0x2B);
 		int8_t yhighdat = readReg(gyroID);
 		
 		//calculating x and y value, high = upper 8 bits, low = lower 8 bits
@@ -355,7 +355,7 @@ void writeReg(uint16_t devID, uint8_t regID, uint8_t data)
 	I2C2 -> CR2 = 0;//reset cr2 register
 	I2C2 -> CR2 |= (devID << 1);//store devID into SADD[7:1]
 	I2C2 -> CR2 |= (I2C_CR2_RD_WRN_Msk & (0x0 << I2C_CR2_RD_WRN_Pos));//set rd_wrn bit = 0, write operation
-	I2C2 -> CR2 |= (0x1 << I2C_CR2_NBYTES_Pos);//store 0x2 into NBYTES [7:0] ie. send 2 byte
+	I2C2 -> CR2 |= (0x2 << I2C_CR2_NBYTES_Pos);//store 0x2 into NBYTES [7:0] ie. send 2 byte
 	I2C2 -> CR2 |= (0x1 << I2C_CR2_START_Pos);//set START bit of CR2 to be 1
 	
 	while (!(I2C2 -> ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))) {}
