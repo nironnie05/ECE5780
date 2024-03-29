@@ -81,8 +81,8 @@ int main(void)
 	GPIOA->MODER |= GPIO_MODER_MODER1_0;
 	GPIOA->MODER |= GPIO_MODER_MODER1_1;
 	//PA4 setup for DAC
-	GPIOA->MODER |= GPIO_MODER_MODER4_0;
-	GPIOA->MODER |= GPIO_MODER_MODER4_1;
+	//GPIOA->MODER |= GPIO_MODER_MODER4_0;
+	//GPIOA->MODER |= GPIO_MODER_MODER4_1;
 	
 	//LED SETUP
 	GPIOC->MODER |= (1<<12); // PC6 RED
@@ -106,7 +106,7 @@ int main(void)
 	GPIOC->PUPDR &= ~((1<<18) | (1<<19));//PC9
 	
 	
-	ADC1->CR |= ADC_CR_ADEN;
+
 	
 	
 	
@@ -163,8 +163,7 @@ int main(void)
   while (1)
   {
 		//PART 1 ---------------------
-		///*
-		while(!(ADC1->ISR & ADC_ISR_EOC)){
+		while(!(ADC1->ISR & ADC_ISR_EOC))
 		pot_value = ADC1->DR;
 
 		GPIOC->ODR &= ~(GPIO_ODR_7 | GPIO_ODR_6 | GPIO_ODR_8 | GPIO_ODR_9);
@@ -183,7 +182,7 @@ int main(void)
 			if(pot_value > 205){
 				GPIOC -> ODR |= GPIO_ODR_8;
 			}
-		}
+		
 		//PART 1 END ------------------
 		//*/
 		//PART 2 ----------------------
