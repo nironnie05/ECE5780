@@ -81,8 +81,8 @@ int main(void)
 	GPIOA->MODER |= GPIO_MODER_MODER1_0;
 	GPIOA->MODER |= GPIO_MODER_MODER1_1;
 	//PA4 setup for DAC
-	//GPIOA->MODER |= GPIO_MODER_MODER4_0;
-	//GPIOA->MODER |= GPIO_MODER_MODER4_1;
+	GPIOA->MODER |= GPIO_MODER_MODER4_0;
+	GPIOA->MODER |= GPIO_MODER_MODER4_1;
 	
 	//LED SETUP
 	GPIOC->MODER |= (1<<12); // PC6 RED
@@ -106,7 +106,7 @@ int main(void)
 	GPIOC->PUPDR &= ~((1<<18) | (1<<19));//PC9
 	
 	
-
+	
 	
 	
 	
@@ -119,6 +119,7 @@ int main(void)
 	
 	//ADC INPUT SETUP ---------------------------------------------------------
 	//setup adc1 for 8 bit mode
+	ADC1->CR |= ADC_CR_ADEN;
 	ADC1->CFGR1 &= ~ADC_CFGR1_RES;//clear all bits of the resolution bits
 	ADC1->CFGR1 |= ADC_CFGR1_RES_1;//setup adc1 to have a 8 bit resolution
 	ADC1->CHSELR |= ADC_CHSELR_CHSEL1;//select PA1 as input to adc1
@@ -129,7 +130,7 @@ int main(void)
 		ADC1->CR |= ADC_CR_ADDIS;//not low, fix this
 	}
 	while(!(ADC1->CR & ADC_CR_ADEN)){}//wait
-	ADC1->CFGR1 &= ~ADC_CFGR1_DMAEN;
+	ADC1->CFGR1 &= ~ADC_CFGR1_DMAEN;//ensure this bit is 0
 	ADC1->CR |= ADC_CR_ADCAL;//begin calibration
 	while((ADC1->CR & ADC_CR_ADCAL) != 0){}//wait for adcal = 0
 	if((ADC1->ISR & ADC_ISR_ADRDY) != 0){
@@ -137,15 +138,16 @@ int main(void)
 	}
 		//everything ready, enable adc1
 	ADC1->CR |= ADC_CR_ADEN;
+	while((ADC1->ISR & ADC_ISR_ADRDY) == 0){}//wait until adc is ready
 		//start adc
 	ADC1->CR |= ADC_CR_ADSTART;
 	//END ADC1 SETUP -----------------------------------------------------------
 	//BEGIN DAC SETUP ---------------------------------------------------------
-	//DAC->CR |= DAC_CR_TSEL1_0;
-	//DAC->CR |= DAC_CR_TSEL1_1;
-	//DAC->CR |= DAC_CR_TSEL1_2;
+	DAC->CR |= DAC_CR_TSEL1_0;
+	DAC->CR |= DAC_CR_TSEL1_1;
+	DAC->CR |= DAC_CR_TSEL1_2;
 	
-	//DAC->CR |= DAC_CR_EN1;
+	DAC->CR |= DAC_CR_EN1;
 	//END DAC SETUP -----------------------------------------------------------
   /* USER CODE END SysInit */
 
@@ -163,10 +165,9 @@ int main(void)
   while (1)
   {
 		//PART 1 ---------------------
-		while(!(ADC1->ISR & ADC_ISR_EOC))
 		pot_value = ADC1->DR;
-
-		GPIOC->ODR &= ~(GPIO_ODR_7 | GPIO_ODR_6 | GPIO_ODR_8 | GPIO_ODR_9);
+		
+		GPIOC->ODR &= ~(GPIO_ODR_7 | GPIO_ODR_6 | GPIO_ODR_8 | GPIO_ODR_9);//reset all led outputs
 
 			//12bit adc1 range by default (0 --- 2^8) (2^8 = 256)
 			//(0.05 * 256 ~= 13) (0.30 * 256 ~= 77)  (0.55 * 256 ~= 141)   (0.8 * 256 = 205)
@@ -186,7 +187,7 @@ int main(void)
 		//PART 1 END ------------------
 		//*/
 		//PART 2 ----------------------
-		/*
+		
 		HAL_Delay(1);
 		
 		DAC->DHR8R1 = sin_table[sin_index];
@@ -199,8 +200,6 @@ int main(void)
 		
 		
 		//PART 2 END ------------------
-		*/
-		
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
   }
