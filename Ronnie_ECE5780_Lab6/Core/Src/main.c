@@ -72,14 +72,63 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+	RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+	//PA1 setup for ADC1 & ADC1 setup
+	GPIOA->MODER |= GPIO_MODER_MODER1_0;
+	GPIOA->MODER |= GPIO_MODER_MODER1_1;
+	
+	//LED SETUP
+	GPIOC->MODER |= (1<<12); // PC6 RED
+	GPIOC->MODER |= (1<<14); // PC7 BLUE
+  GPIOC->MODER |= (1<<16); // PC8 ORANGE
+	GPIOC->MODER |= (1<<18); // PC9 GREEN
+	// Set pins to push-pull output type in OTYPER register
+	GPIOC->OTYPER &= ~(1<<6); // PC6
+	GPIOC->OTYPER &= ~(1<<7); // PC7
+	GPIOC->OTYPER &= ~(1<<8); // PC8
+	GPIOC->OTYPER &= ~(1<<9); // PC9
+	//lowspeed
+	GPIOC->OSPEEDR &= ~(1<<12); // PC6
+	GPIOC->OSPEEDR &= ~(1<<14); // PC7
+	GPIOC->OSPEEDR &= ~(1<<16); // PC8
+	GPIOC->OSPEEDR &= ~(1<<18); // PC9
+	//no pupd
+	GPIOC->PUPDR &= ~((1<<12) | (1<<13));//PC6
+	GPIOC->PUPDR &= ~((1<<14) | (1<<15));//PC7
+	GPIOC->PUPDR &= ~((1<<16) | (1<<17));//PC8 
+	GPIOC->PUPDR &= ~((1<<18) | (1<<19));//PC9
+	
+	
+	ADC1->CR |= ADC_CR_ADEN;
+	
+	
+	
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+	
+	//ADC Calibration and startup (all registers modified below reset to 0x0)
+	ADC1->CR |= ADC_CR_ADCAL;
+	while(!(ADC1->CR & ADC_CR_ADEN)){}//wait for calibration to complete
+	
+	//setup adc1 for 8 bit mode
+	ADC1->CFGR1 &= ~ADC_CFGR1_RES;//clear all bits of the resolution bits
+	ADC1->CFGR1 |= ADC_CFGR1_RES_1;//setup adc1 to have a 8 bit resolution
+	ADC1->CHSELR |= ADC_CHSELR_CHSEL1;
+	ADC1->CFGR1 |= ADC_CFGR1_CONT;
+		
+		
+	ADC1->CR |= ADC_CR_ADEN;
+	while(!(ADC1->ISR & ADC_ISR_ADRDY));//wait for adc ready
+	
+	ADC1->CR |= ADC_CR_ADSTART;
+	
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -89,10 +138,29 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	uint16_t pot_value = 0;
   while (1)
   {
-    /* USER CODE END WHILE */
+		//while(!(ADC1->ISR & ADC_ISR_EOC));
+		pot_value = ADC1->DR;
 
+		GPIOC->ODR &= ~(GPIO_ODR_7 | GPIO_ODR_6 | GPIO_ODR_8 | GPIO_ODR_9);
+
+		//12bit adc1 range by default (0 --- 2^12) (2^12 = 4096)
+		//(0.25 * 4096 = 1024)  (0.5 * 4096 = 2048)   (0.75 * 4096 = 3072)
+		if(pot_value < 1024){
+			GPIOC -> ODR |= GPIO_ODR_6;
+		}
+		else if(pot_value < 2048) {
+			GPIOC -> ODR |= GPIO_ODR_7;
+		}
+		else if(pot_value < 3072) {
+			GPIOC -> ODR |= GPIO_ODR_8;
+		}
+		else{
+			GPIOC -> ODR |= GPIO_ODR_9;
+		}
+    /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
