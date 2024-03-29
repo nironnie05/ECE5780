@@ -73,12 +73,16 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 	RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
+	RCC->APB1ENR |= RCC_APB1ENR_DACEN;
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
 	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
 	//PA1 setup for ADC1 & ADC1 setup
 	GPIOA->MODER |= GPIO_MODER_MODER1_0;
 	GPIOA->MODER |= GPIO_MODER_MODER1_1;
+	//PA4 setup for DAC
+	GPIOA->MODER |= GPIO_MODER_MODER4_0;
+	GPIOA->MODER |= GPIO_MODER_MODER4_1;
 	
 	//LED SETUP
 	GPIOC->MODER |= (1<<12); // PC6 RED
@@ -113,53 +117,91 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 	
-	//ADC Calibration and startup (all registers modified below reset to 0x0)
-	ADC1->CR |= ADC_CR_ADCAL;
-	while(!(ADC1->CR & ADC_CR_ADEN)){}//wait for calibration to complete
-	
+	//ADC INPUT SETUP ---------------------------------------------------------
 	//setup adc1 for 8 bit mode
 	ADC1->CFGR1 &= ~ADC_CFGR1_RES;//clear all bits of the resolution bits
 	ADC1->CFGR1 |= ADC_CFGR1_RES_1;//setup adc1 to have a 8 bit resolution
-	ADC1->CHSELR |= ADC_CHSELR_CHSEL1;
-	ADC1->CFGR1 |= ADC_CFGR1_CONT;
-		
-		
+	ADC1->CHSELR |= ADC_CHSELR_CHSEL1;//select PA1 as input to adc1
+	ADC1->CFGR1 |= ADC_CFGR1_CONT;//continuous sampling of input
+	//ADC Calibration and startup (all registers modified below reset to 0x0)
+	if((ADC1->CR & ADC_CR_ADEN) != 0)//make sure required bits are low
+	{
+		ADC1->CR |= ADC_CR_ADDIS;//not low, fix this
+	}
+	while(!(ADC1->CR & ADC_CR_ADEN)){}//wait
+	ADC1->CFGR1 &= ~ADC_CFGR1_DMAEN;
+	ADC1->CR |= ADC_CR_ADCAL;//begin calibration
+	while((ADC1->CR & ADC_CR_ADCAL) != 0){}//wait for adcal = 0
+	if((ADC1->ISR & ADC_ISR_ADRDY) != 0){
+		ADC1->ISR |= ADC_ISR_ADRDY;
+	}
+		//everything ready, enable adc1
 	ADC1->CR |= ADC_CR_ADEN;
-	while(!(ADC1->ISR & ADC_ISR_ADRDY));//wait for adc ready
-	
+		//start adc
 	ADC1->CR |= ADC_CR_ADSTART;
+	//END ADC1 SETUP -----------------------------------------------------------
+	//BEGIN DAC SETUP ---------------------------------------------------------
+	//DAC->CR |= DAC_CR_TSEL1_0;
+	//DAC->CR |= DAC_CR_TSEL1_1;
+	//DAC->CR |= DAC_CR_TSEL1_2;
 	
+	//DAC->CR |= DAC_CR_EN1;
+	//END DAC SETUP -----------------------------------------------------------
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
-
+	//table for sine wave values for 8-bit values with 32 samples per 1 cycle
+	const uint8_t sin_table[32] = {127,151,175,197,216,232,244,251,254,251,244,232,216,197,175,151,127,102,78,56,37,21,9,2,0,2,9,21,37,56,78,102};
+	
+	uint8_t sin_index;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	uint16_t pot_value = 0;
+	int16_t pot_value = 0;
   while (1)
   {
-		//while(!(ADC1->ISR & ADC_ISR_EOC));
+		//PART 1 ---------------------
+		///*
+		while(!(ADC1->ISR & ADC_ISR_EOC)){
 		pot_value = ADC1->DR;
 
 		GPIOC->ODR &= ~(GPIO_ODR_7 | GPIO_ODR_6 | GPIO_ODR_8 | GPIO_ODR_9);
 
-		//12bit adc1 range by default (0 --- 2^12) (2^12 = 4096)
-		//(0.25 * 4096 = 1024)  (0.5 * 4096 = 2048)   (0.75 * 4096 = 3072)
-		if(pot_value < 1024){
-			GPIOC -> ODR |= GPIO_ODR_6;
+			//12bit adc1 range by default (0 --- 2^8) (2^8 = 256)
+			//(0.05 * 256 ~= 13) (0.30 * 256 ~= 77)  (0.55 * 256 ~= 141)   (0.8 * 256 = 205)
+			if(pot_value > 13){
+				GPIOC -> ODR |= GPIO_ODR_6;
+			}
+			if(pot_value > 77) {
+				GPIOC -> ODR |= GPIO_ODR_9;
+			}
+			if(pot_value > 141) {
+				GPIOC -> ODR |= GPIO_ODR_7;
+			}
+			if(pot_value > 205){
+				GPIOC -> ODR |= GPIO_ODR_8;
+			}
 		}
-		else if(pot_value < 2048) {
-			GPIOC -> ODR |= GPIO_ODR_7;
+		//PART 1 END ------------------
+		//*/
+		//PART 2 ----------------------
+		/*
+		HAL_Delay(1);
+		
+		DAC->DHR8R1 = sin_table[sin_index];
+		if(sin_index == 31) {
+			sin_index = 0;
 		}
-		else if(pot_value < 3072) {
-			GPIOC -> ODR |= GPIO_ODR_8;
+		else {
+			sin_index = sin_index + 1;
 		}
-		else{
-			GPIOC -> ODR |= GPIO_ODR_9;
-		}
+		
+		
+		//PART 2 END ------------------
+		*/
+		
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
   }
