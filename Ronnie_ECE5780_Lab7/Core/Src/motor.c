@@ -159,7 +159,7 @@ void PI_update(void) {
      */
     
     /// TODO: calculate error signal and write to "error" variable
-    
+    int16_t error = (2*target_rpm) - motor_speed;
     /* Hint: Remember that your calculated motor speed may not be directly in RPM!
      *       You will need to convert the target or encoder speeds to the same units.
      *       I recommend converting to whatever units result in larger values, gives
@@ -168,9 +168,11 @@ void PI_update(void) {
     
     
     /// TODO: Calculate integral portion of PI controller, write to "error_integral" variable
-    
+    error_integral += error;
     /// TODO: Clamp the value of the integral to a limited positive range
-    
+    if(error < 0) error_integral = 0;
+		if(error_integral > 3200)error_integral = 3200;//The maximum instructable output is 3200, make sure it doesnt exceed this.
+			
     /* Hint: The value clamp is needed to prevent excessive "windup" in the integral.
      *       You'll read more about this for the post-lab. The exact value is arbitrary
      *       but affects the PI tuning.
@@ -179,7 +181,7 @@ void PI_update(void) {
     
     /// TODO: Calculate proportional portion, add integral and write to "output" variable
     
-    int16_t output = 0; // Change this!
+     int16_t output = Kp*error + Ki*error_integral;; // CHANGED!
     
     /* Because the calculated values for the PI controller are significantly larger than 
      * the allowable range for duty cycle, you'll need to divide the result down into 
@@ -198,9 +200,10 @@ void PI_update(void) {
      */
 
      /// TODO: Divide the output into the proper range for output adjustment
-     
+      output = output/32;//output generated is 32* too large, fix this here
      /// TODO: Clamp the output value between 0 and 100 
-    
+			if(output > 100) output = 100;
+			if(output < 0) output = 0;
     pwm_setDutyCycle(output);
     duty_cycle = output;            // For debug viewing
 

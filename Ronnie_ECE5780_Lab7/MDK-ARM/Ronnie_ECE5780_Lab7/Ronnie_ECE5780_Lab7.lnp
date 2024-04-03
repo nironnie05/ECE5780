@@ -1,0 +1,26 @@
+--cpu Cortex-M0
+"ronnie_ece5780_lab7\startup_stm32f078xx.o"
+"ronnie_ece5780_lab7\main.o"
+"ronnie_ece5780_lab7\stm32f0xx_it.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_msp.o"
+"ronnie_ece5780_lab7\motor.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_tim.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_tim_ex.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_rcc.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_rcc_ex.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_i2c.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_i2c_ex.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_gpio.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_dma.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_cortex.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_pwr.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_pwr_ex.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_flash.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_flash_ex.o"
+"ronnie_ece5780_lab7\stm32f0xx_hal_exti.o"
+"ronnie_ece5780_lab7\system_stm32f0xx.o"
+--strict --scatter "Ronnie_ECE5780_Lab7\Ronnie_ECE5780_Lab7.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "Ronnie_ECE5780_Lab7.map" -o Ronnie_ECE5780_Lab7\Ronnie_ECE5780_Lab7.axf
